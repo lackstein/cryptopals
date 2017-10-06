@@ -77,3 +77,13 @@ func findSingleXORKey(in []byte, corpus Corpus) (res []byte, key byte, score flo
 
   return
 }
+
+func repeatingXOR(in, key []byte) []byte {
+  res := make([]byte, len(in))
+
+  for i := range in {
+    res[i] = in[i] ^ key[i % len(key)]
+  }
+
+  return res
+}
