@@ -2,6 +2,7 @@ package cryptopals
 
 import (
 	"bytes"
+	"crypto/aes"
 	"encoding/base64"
 	"encoding/hex"
 	"io/ioutil"
@@ -23,11 +24,11 @@ func decodeBase64(t *testing.T, s string) []byte {
 	t.Helper()
 
 	res, err := base64.StdEncoding.DecodeString(s)
-  if err != nil {
-    t.Fatal(err)
-  }
+	if err != nil {
+		t.Fatal(err)
+	}
 
-  return res
+	return res
 }
 
 func corpusFromFile(fileName string) Corpus {
@@ -108,15 +109,25 @@ func TestChallenge6(t *testing.T) {
 		t.Error("Wrong Hamming distance. Got", distance)
 	}
 
-  keySize := findRepeatingXORKeySize(decodeHex(t, "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"))
-  if keySize != 3 {
-    t.Error("Wrong key size. Got", keySize)
-  }
+	keySize := findRepeatingXORKeySize(decodeHex(t, "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"))
+	if keySize != 3 {
+		t.Error("Wrong key size. Got", keySize)
+	}
 
-  data := decodeBase64(t, string(readFile(t, "_testdata/challenge6.txt")))
-  keySize2 := findRepeatingXORKeySize(data)
-  t.Logf("Likely key size: %v", keySize2)
-  key := findRepeatingXORKey(data, corpus)
-  t.Logf("Likely key: %q", key)
-  t.Logf("%s", repeatingXOR(data, key))
+	data := decodeBase64(t, string(readFile(t, "_testdata/challenge6.txt")))
+	keySize2 := findRepeatingXORKeySize(data)
+	t.Logf("Likely key size: %v", keySize2)
+	key := findRepeatingXORKey(data, corpus)
+	t.Logf("Likely key: %q", key)
+	t.Logf("%s", repeatingXOR(data, key))
+}
+
+func TestChallenge7(t *testing.T) {
+	data := decodeBase64(t, string(readFile(t, "_testdata/challenge7.txt")))
+	b, err := aes.NewCipher([]byte("YELLOW SUBMARINE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res := decryptECB(data, b)
+	t.Logf("%s", res)
 }

@@ -1,6 +1,7 @@
 package cryptopals
 
 import (
+	"crypto/cipher"
 	"encoding/base64"
 	"encoding/hex"
 	"math"
@@ -134,9 +135,22 @@ func findRepeatingXORKey(in []byte, corpus Corpus) []byte {
 
 			column[row] = in[row*keySize+col]
 		}
-    _, k, _ := findSingleXORKey(column, corpus)
-    key[col] = k
+		_, k, _ := findSingleXORKey(column, corpus)
+		key[col] = k
 	}
 
 	return key
+}
+
+func decryptECB(in []byte, b cipher.Block) []byte {
+  if len(in) % b.BlockSize() != 0 {
+    panic("Input length is not a multiple of the block size")
+  }
+
+  res := make([]byte, len(in))
+  for i := 0; i < len(in); i += b.BlockSize() {
+    b.Decrypt(res[i:], in[i:])
+  }
+
+  return res
 }
