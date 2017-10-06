@@ -3,6 +3,8 @@ package cryptopals
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"math"
+	"math/bits"
 	"unicode/utf8"
 )
 
@@ -45,45 +47,96 @@ func buildCorpus(text string) Corpus {
 }
 
 func scoreTextWithCorpus(text string, corpus Corpus) float64 {
-  var score float64
-  for _, char := range text {
-    score += corpus[char]
-  }
+	var score float64
+	for _, char := range text {
+		score += corpus[char]
+	}
 
-  return score / float64(utf8.RuneCountInString(text))
+	return score / float64(utf8.RuneCountInString(text))
 }
 
 func singleXOR(in []byte, key byte) []byte {
-  res := make([]byte, len(in))
+	res := make([]byte, len(in))
 
-  for i := range in {
-    res[i] = in[i] ^ key
-  }
+	for i := range in {
+		res[i] = in[i] ^ key
+	}
 
-  return res
+	return res
 }
 
 func findSingleXORKey(in []byte, corpus Corpus) (res []byte, key byte, score float64) {
-  for char := range corpus {
-    out := singleXOR(in, byte(char))
-    s := scoreTextWithCorpus(string(out), corpus)
+	for char := range corpus {
+		out := singleXOR(in, byte(char))
+		s := scoreTextWithCorpus(string(out), corpus)
 
-    if s > score {
-      res = out
-      score = s
-      key = byte(char)
-    }
-  }
+		if s > score {
+			res = out
+			score = s
+			key = byte(char)
+		}
+	}
 
-  return
+	return
 }
 
 func repeatingXOR(in, key []byte) []byte {
-  res := make([]byte, len(in))
+	res := make([]byte, len(in))
 
-  for i := range in {
-    res[i] = in[i] ^ key[i % len(key)]
-  }
+	for i := range in {
+		res[i] = in[i] ^ key[i%len(key)]
+	}
 
-  return res
+	return res
+}
+
+func hammingDistance(a, b []byte) int {
+	if len(a) != len(b) {
+		panic("Inputs must be the same length")
+	}
+
+	var count int
+	for i := range a {
+		count += bits.OnesCount8(a[i] ^ b[i])
+	}
+
+	return count
+}
+
+func findRepeatingXORKeySize(in []byte) int {
+	bestScore := math.MaxFloat64
+	var res int
+
+	for keyLen := 2; keyLen <= (len(in)/4/2 - 1); keyLen++ {
+		a, b := in[:keyLen*4], in[keyLen*4:keyLen*4*2]
+		score := float64(hammingDistance(a, b)) / float64(keyLen)
+
+		if score < bestScore {
+			bestScore = score
+			res = keyLen
+		}
+	}
+
+	return res
+}
+
+func findRepeatingXORKey(in []byte, corpus Corpus) []byte {
+	keySize := findRepeatingXORKeySize(in)
+	key := make([]byte, keySize)
+
+	column := make([]byte, len(in)/keySize)
+
+	for col := 0; col < keySize; col++ {
+		for row := range column {
+			if row*keySize+col > len(in) {
+				continue
+			}
+
+			column[row] = in[row*keySize+col]
+		}
+    _, k, _ := findSingleXORKey(column, corpus)
+    key[col] = k
+	}
+
+	return key
 }

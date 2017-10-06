@@ -2,6 +2,7 @@ package cryptopals
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/hex"
 	"io/ioutil"
 	"strings"
@@ -16,6 +17,17 @@ func decodeHex(t *testing.T, s string) []byte {
 		t.Fatal(err)
 	}
 	return res
+}
+
+func decodeBase64(t *testing.T, s string) []byte {
+	t.Helper()
+
+	res, err := base64.StdEncoding.DecodeString(s)
+  if err != nil {
+    t.Fatal(err)
+  }
+
+  return res
 }
 
 func corpusFromFile(fileName string) Corpus {
@@ -80,12 +92,31 @@ func TestChallenge4(t *testing.T) {
 }
 
 func TestChallenge5(t *testing.T) {
-  in := `Burning 'em, if you ain't quick and nimble
+	in := `Burning 'em, if you ain't quick and nimble
 I go crazy when I hear a cymbal`
-  expected := decodeHex(t, "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
+	expected := decodeHex(t, "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f")
 
-  res := repeatingXOR([]byte(in), []byte("ICE"))
-  if !bytes.Equal(res, expected) {
-    t.Error("Wrong result. Got", res)
+	res := repeatingXOR([]byte(in), []byte("ICE"))
+	if !bytes.Equal(res, expected) {
+		t.Error("Wrong result. Got", res)
+	}
+}
+
+func TestChallenge6(t *testing.T) {
+	distance := hammingDistance([]byte("this is a test"), []byte("wokka wokka!!!"))
+	if distance != 37 {
+		t.Error("Wrong Hamming distance. Got", distance)
+	}
+
+  keySize := findRepeatingXORKeySize(decodeHex(t, "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f"))
+  if keySize != 3 {
+    t.Error("Wrong key size. Got", keySize)
   }
+
+  data := decodeBase64(t, string(readFile(t, "_testdata/challenge6.txt")))
+  keySize2 := findRepeatingXORKeySize(data)
+  t.Logf("Likely key size: %v", keySize2)
+  key := findRepeatingXORKey(data, corpus)
+  t.Logf("Likely key: %q", key)
+  t.Logf("%s", repeatingXOR(data, key))
 }
