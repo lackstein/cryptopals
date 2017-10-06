@@ -154,3 +154,20 @@ func decryptECB(in []byte, b cipher.Block) []byte {
 
   return res
 }
+
+func detectECB(in []byte, blockSize int) bool {
+  if len(in) % blockSize != 0 {
+    panic("Input length is not a multiple of the block size")
+  }
+
+  seen := make(map[string]bool)
+  for i := 0; i < len(in); i += blockSize {
+    val := string(in[i:i+blockSize])
+    if _, ok := seen[val]; ok {
+      return true
+    }
+    seen[val] = true
+  }
+
+  return false
+}

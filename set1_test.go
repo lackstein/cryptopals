@@ -131,3 +131,12 @@ func TestChallenge7(t *testing.T) {
 	res := decryptECB(data, b)
 	t.Logf("%s", res)
 }
+
+func TestChallenge8(t *testing.T) {
+  lines := strings.Split(string(readFile(t, "_testdata/challenge8.txt")), "\n")
+  for i, line := range lines {
+    if detectECB(decodeHex(t, line), 16) {
+      t.Logf("Ciphertext number %v is ECB encrypted", i)
+    }
+  }
+}
